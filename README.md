@@ -12,6 +12,7 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 
 ## Table of contents
 - [Features](#features)
+- [Why CrashSafeImage?](#why-crash-safe-image)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [How it decides the source](#how-it-decides-the-source)
@@ -38,6 +39,38 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 - ✅ **Customizable**: size, fit, alignment, borderRadius, color, opacity, blend mode, HTTP headers & cacheKey
 
 ---
+
+## Why Crash Safe Image
+- **Stops avoidable crashes**: invalid asset keys, missing files, empty/null sources → you get a friendly error UI instead of exceptions.
+- **One widget, four sources**: network • asset • file • memory — no `if/else` soup.
+- **Better UX by default**: placeholders and fade‑in/out already wired.
+- **Caches network images** out of the box via `cached_network_image`.
+- **Works with existing APIs**: grab `.provider` for `CircleAvatar`/`DecorationImage`.
+- **Easy to style**: `fit`, `alignment`, `borderRadius`, `opacity`, `colorBlendMode`.
+- **Lean & tested**: small surface area with widget tests.
+
+**When should I use it?**
+- Dynamic sources from API/user input where failures must not crash UI.
+- Avatars, logos, list/grid images with consistent placeholders.
+
+**When might I not need it?**
+- You need custom decoding/stream control or web‑only file paths (until web‑safe mode ships).
+
+**Before vs After**
+```dart
+// Before: branching + manual fallbacks
+Widget buildAvatar(String? url) {
+  if (url == null || url.isEmpty) return const Icon(Icons.person);
+  return Image.network(url, errorBuilder: (_, __, ___) => const Icon(Icons.person));
+}
+
+// After: one line
+CrashSafeImage(url, width: 40, height: 40, errorBuilder: (_) => const Icon(Icons.person));
+```
+
+---
+
+
 
 ## Install
 Add to your `pubspec.yaml`:
