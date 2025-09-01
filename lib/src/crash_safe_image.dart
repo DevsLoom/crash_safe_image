@@ -232,7 +232,7 @@ class CrashSafeImage extends StatelessWidget {
           fadeOutDuration: fadeOutDuration,
           placeholder: (ctx, _) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
-          errorWidget: (ctx, _, __) =>
+          errorWidget: (ctx, _, _) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -252,7 +252,7 @@ class CrashSafeImage extends StatelessWidget {
           color: color,
           opacity: opacity,
           colorBlendMode: colorBlendMode,
-          errorBuilder: (ctx, _, __) =>
+          errorBuilder: (ctx, _, _) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -272,7 +272,7 @@ class CrashSafeImage extends StatelessWidget {
         color: color,
         opacity: opacity,
         colorBlendMode: colorBlendMode,
-        errorBuilder: (ctx, _, __) =>
+        errorBuilder: (ctx, _, _) =>
             errorBuilder?.call(ctx) ?? _defaultError(ctx),
       ),
     );

@@ -1,11 +1,23 @@
 name: crash_safe_image
 description: "A new Flutter package project."
-version: 0.0.1
-homepage:
+version: 0.1.0
+homepage: https://github.com/DevsLoom/crash_safe_image
+repository: https://github.com/DevsLoom/crash_safe_image
+issue_tracker: https://github.com/DevsLoom/crash_safe_image/issues
 
 environment:
-  sdk: ^3.9.0
-  flutter: ">=1.17.0"
+  sdk: ">=3.9.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+topics:
+  - images
+  - widget
+  - caching
+  - utility
+
+screenshots:
+  - description: "CrashSafeImage network example"
+    # path: example/screenshot.png
 
 dependencies:
   flutter:
@@ -15,7 +27,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
