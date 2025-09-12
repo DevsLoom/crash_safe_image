@@ -32,6 +32,7 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 
 ## Features
 - ✅ **Auto‑detects**: `http/https` → network · `file://`/absolute path → file · no scheme → asset · `bytes` → memory
+- ✅ **SVG support**: auto-detects `.svg` for network/asset/file/memory, powered by `flutter_svg`
 - ✅ **Crash‑safe defaults**: shows placeholder while loading and a clean error UI on failure
 - ✅ **Network caching** via `cached_network_image`
 - ✅ **Works in lists/grids** with optional fade‑in/out
