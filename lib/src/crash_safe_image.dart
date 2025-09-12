@@ -1,39 +1,37 @@
-import 'dart:convert';
+// ─────────────────────────────────────────────────────────────────────────────
+// CrashSafeImage — with SVG support (network/asset/file/memory) + svgString()
+// ─────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // AssetBundle
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 // WHAT'S NEW:
 //   • [SVG SUPPORT] Auto-detects and renders SVG via flutter_svg for network/asset/file/memory
-//   • Keeps same public API style via named constructors
+//   • [NEW] factory CrashSafeImage.svgString('<svg ...>')
 //   • Shared placeholder + error handling pathways
 
-/// ===============================
-/// Example usages of CrashSafeImage
-/// ===============================
+/// ======  Example usages of CrashSafeImage =======
 
 /// 🔹 Network image (auto-detects from http/https)
-///    Useful for loading images from API / CDN / web URLs
 /*CrashSafeImage(
   'https://cdn4.iconfinder.com/data/icons/flat-brand-logo-2/512/visa-512.png',
   width: 35,
   height: 24,
 );
 
-/// 🔹 Asset image (auto-detects since no scheme given)
-///    Perfect for bundled images inside your Flutter app (pubspec.yaml)
+/// 🔹 Asset image (no scheme → asset)
 CrashSafeImage(
   'assets/images/logo.png',
   width: 40,
   height: 40,
 );
 
-/// 🔹 File image (auto-detects from absolute/local file path or file:// scheme)
-///    Great for displaying images picked from gallery / saved locally
+/// 🔹 File image (absolute/local file path or file://)
 CrashSafeImage(
   '/storage/emulated/0/Download/picture.jpg',
   width: 100,
@@ -41,7 +39,6 @@ CrashSafeImage(
 );
 
 /// 🔹 Memory image (provide raw bytes directly)
-///    Use when you already have Uint8List (e.g., from camera, network, DB)
 CrashSafeImage(
   null,
   bytes: myUint8List,
@@ -49,26 +46,12 @@ CrashSafeImage(
   height: 100,
 );
 
-/// 🔹 Using as ImageProvider (instead of Widget)
-///    Handy for CircleAvatar, BoxDecoration, etc.
+/// 🔹 Using as ImageProvider
 CircleAvatar(
   radius: 30,
   backgroundImage: CrashSafeImage(
     'https://cdn4.iconfinder.com/data/icons/flat-brand-logo-2/512/visa-512.png',
   ).provider,
-  child: null, // can add fallback if provider is null
-);
-
-/// 🔹 DecorationImage (Container background)
-Container(
-  width: 120,
-  height: 80,
-  decoration: BoxDecoration(
-    image: DecorationImage(
-      image: CrashSafeImage('assets/images/bg.png').provider!,
-      fit: BoxFit.cover,
-    ),
-  ),
 );
 
 /// 🔹 With error & placeholder overrides
@@ -77,9 +60,10 @@ CrashSafeImage(
   width: 80,
   height: 80,
   placeholderBuilder: (_) => const Center(child: Text('Loading...')),
-  errorBuilder: (_) => const Icon(Icons.error, color: Colors.red),
+  errorBuilder:     (_) => const Icon(Icons.error, color: Colors.red),
 );
 */
+
 class CrashSafeImage extends StatelessWidget {
   final String? name;
 
@@ -134,12 +118,63 @@ class CrashSafeImage extends StatelessWidget {
     this.bytes,
   });
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // [NEW] Create from raw SVG string
+  // ───────────────────────────────────────────────────────────────────────────
+  factory CrashSafeImage.svgString(
+    String rawSvg, {
+    Key? key,
+    double? width,
+    double? height,
+    BoxFit? fit,
+    AlignmentGeometry alignment = Alignment.center,
+    BorderRadius? borderRadius,
+    Clip clipBehavior = Clip.hardEdge,
+    Color? color,
+    Animation<double>? opacity,
+    BlendMode? colorBlendMode,
+    WidgetBuilder? placeholderBuilder,
+    WidgetBuilder? errorBuilder,
+    Map<String, String>? httpHeaders,
+    String? cacheKey,
+    Duration fadeInDuration = const Duration(milliseconds: 250),
+    Duration fadeOutDuration = const Duration(milliseconds: 250),
+    AssetBundle? bundle,
+    String? package,
+  }) {
+    final bytes = Uint8List.fromList(rawSvg.codeUnits);
+    return CrashSafeImage(
+      null,
+      key: key,
+      width: width,
+      height: height,
+      fit: fit,
+      alignment: alignment,
+      borderRadius: borderRadius,
+      clipBehavior: clipBehavior,
+      color: color,
+      opacity: opacity,
+      colorBlendMode: colorBlendMode,
+      placeholderBuilder: placeholderBuilder,
+      errorBuilder: errorBuilder,
+      httpHeaders: httpHeaders,
+      cacheKey: cacheKey,
+      fadeInDuration: fadeInDuration,
+      fadeOutDuration: fadeOutDuration,
+      bundle: bundle,
+      package: package,
+      bytes: bytes,
+    );
+  }
+
   /// Safe ImageProvider<Object>? for places like CircleAvatar.backgroundImage.
+  /// Note: SVG has no ImageProvider → returns null for SVG sources.
   ImageProvider<Object>? get provider {
     // Memory image
     if (bytes != null && bytes!.isNotEmpty) {
-      // [SVG SUPPORT] If bytes look like SVG, no ImageProvider – return null.
-      if (_looksLikeSvgFromBytes(bytes)) return null;
+      if (_looksLikeSvgFromBytes(bytes)) {
+        return null; // SVG memory → no provider
+      }
       return MemoryImage(bytes!);
     }
 
@@ -147,10 +182,10 @@ class CrashSafeImage extends StatelessWidget {
     if (name == null || name!.trim().isEmpty) return null;
     final src = name!.trim();
 
-    // [SVG SUPPORT] If path/url looks SVG, provider not supported → null
-    if (_looksLikeSvgFromPath(src)) return null; // [NEW]
+    // SVG path/url → no provider
+    if (_looksLikeSvgFromPath(src)) return null;
 
-    // Network
+    // Network (raster)
     final uri = Uri.tryParse(src);
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return CachedNetworkImageProvider(
@@ -160,7 +195,7 @@ class CrashSafeImage extends StatelessWidget {
       );
     }
 
-    // File
+    // File (raster)
     if (src.startsWith('file://')) {
       return FileImage(File.fromUri(Uri.parse(src)));
     }
@@ -168,7 +203,7 @@ class CrashSafeImage extends StatelessWidget {
       return FileImage(File(src));
     }
 
-    // Asset
+    // Asset (raster)
     return AssetImage(src, package: package);
   }
 
@@ -198,14 +233,14 @@ class CrashSafeImage extends StatelessWidget {
     );
   }
 
-  // [SVG SUPPORT][NEW] — Detect SVG by path/URL
+  // [SVG SUPPORT] — Detect SVG by path/URL
   bool _looksLikeSvgFromPath(String? path) {
     if (path == null) return false;
     final p = path.toLowerCase().trim();
     return p.endsWith('.svg') || p.contains('.svg?') || p.contains('.svg#');
   }
 
-  // [SVG SUPPORT][NEW] — Detect SVG by memory bytes (peek first ~128 bytes)
+  // [SVG SUPPORT] — Detect SVG by memory bytes (peek first ~128 bytes)
   bool _looksLikeSvgFromBytes(Uint8List? data) {
     if (data == null || data.isEmpty) return false;
     final head = utf8
@@ -219,13 +254,13 @@ class CrashSafeImage extends StatelessWidget {
         head.startsWith('<!--');
   }
 
-  // [SVG SUPPORT][NEW] — Wrap with opacity for SVG (flutter_svg lacks opacity param)
+  // [SVG SUPPORT] — Wrap with opacity for SVG (flutter_svg lacks opacity param)
   Widget _maybeWrapOpacity(Widget child) {
     if (opacity == null) return child;
     return Opacity(opacity: opacity!.value, child: child);
   }
 
-  // [SVG SUPPORT][NEW] — Derive a ColorFilter for SVG tinting from color/colorBlendMode
+  // [SVG SUPPORT] — Derive a ColorFilter for SVG tinting from color/colorBlendMode
   ColorFilter? get _svgColorFilter {
     if (color == null) return null;
     return ColorFilter.mode(color!, colorBlendMode ?? BlendMode.srcIn);
@@ -234,20 +269,18 @@ class CrashSafeImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final src = name?.trim();
-    //final imgProvider = provider;
 
     // Case 1: memory
     if (bytes != null && bytes!.isNotEmpty) {
-      // [SVG SUPPORT][CHANGED]: detect SVG bytes → SvgPicture.memory
+      // SVG bytes → SvgPicture.memory
       if (_looksLikeSvgFromBytes(bytes)) {
         final svg = SvgPicture.memory(
           bytes!,
           width: width,
           height: height,
-          fit: fit ?? BoxFit.contain, // sensible default for SVG
+          fit: fit ?? BoxFit.contain,
           alignment: alignment,
           colorFilter: _svgColorFilter,
-          // error handled by outer try/catch if thrown
         );
         return _sizedBox(context, _maybeWrapOpacity(svg));
       }
@@ -272,14 +305,14 @@ class CrashSafeImage extends StatelessWidget {
     if (src == null || src.isEmpty) {
       return errorBuilder?.call(context) ?? _defaultError(context);
     }
-    // [SVG SUPPORT] if looks like SVG path/url → route to SvgPicture.*
+
+    // Decide SVG by path once
     final isSvgPath = _looksLikeSvgFromPath(src);
 
     // Case 3: network
     final uri = Uri.tryParse(src);
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
       if (isSvgPath) {
-        // [SVG SUPPORT][NEW]
         final widget = SvgPicture.network(
           src,
           width: width,
@@ -287,13 +320,13 @@ class CrashSafeImage extends StatelessWidget {
           fit: fit ?? BoxFit.contain,
           alignment: alignment,
           colorFilter: _svgColorFilter,
-          // flutter_svg doesn't have errorBuilder; we show placeholder while building
           placeholderBuilder: (ctx) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
         );
-        // We still clip/size via _sizedBox:
         return _sizedBox(context, _maybeWrapOpacity(widget));
       }
+
+      // Raster network
       return _sizedBox(
         context,
         CachedNetworkImage(
@@ -312,17 +345,19 @@ class CrashSafeImage extends StatelessWidget {
           cacheKey: cacheKey,
           placeholder: (ctx, _) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
-          errorWidget: (ctx, _, _) =>
+          errorWidget: (ctx, _, __) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
     }
 
     // Case 4: file
-    if (src.startsWith('file://') ||
-        FileSystemEntity.typeSync(src) != FileSystemEntityType.notFound) {
+    final isFilePath =
+        src.startsWith('file://') ||
+        FileSystemEntity.typeSync(src) != FileSystemEntityType.notFound;
+
+    if (isFilePath) {
       if (isSvgPath) {
-        // [SVG SUPPORT][NEW]
         final file = src.startsWith('file://')
             ? File.fromUri(Uri.parse(src))
             : File(src);
@@ -338,6 +373,8 @@ class CrashSafeImage extends StatelessWidget {
         );
         return _sizedBox(context, _maybeWrapOpacity(widget));
       }
+
+      // Raster file
       return _sizedBox(
         context,
         Image.file(
@@ -349,7 +386,7 @@ class CrashSafeImage extends StatelessWidget {
           color: color,
           opacity: opacity,
           colorBlendMode: colorBlendMode,
-          errorBuilder: (ctx, _, _) =>
+          errorBuilder: (ctx, _, __) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -357,7 +394,6 @@ class CrashSafeImage extends StatelessWidget {
 
     // Case 5: asset
     if (isSvgPath) {
-      // [SVG SUPPORT][NEW]
       final widget = SvgPicture.asset(
         src,
         bundle: bundle,
@@ -372,6 +408,8 @@ class CrashSafeImage extends StatelessWidget {
       );
       return _sizedBox(context, _maybeWrapOpacity(widget));
     }
+
+    // Raster asset
     return _sizedBox(
       context,
       Image.asset(
@@ -385,7 +423,7 @@ class CrashSafeImage extends StatelessWidget {
         color: color,
         opacity: opacity,
         colorBlendMode: colorBlendMode,
-        errorBuilder: (ctx, _, _) =>
+        errorBuilder: (ctx, _, __) =>
             errorBuilder?.call(ctx) ?? _defaultError(ctx),
       ),
     );
