@@ -119,6 +119,21 @@ CircleAvatar(
 );
 ```
 
+**SVG examples**
+```dart
+// Network SVG
+CrashSafeImage.network('https://example.com/icon.svg', width: 40, height: 40);
+
+// Asset SVG
+CrashSafeImage.asset('assets/icons/logo.svg', width: 80);
+
+// File SVG
+CrashSafeImage.file(File('/storage/emulated/0/Download/icon.svg'));
+
+// Raw SVG string
+CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
+```
+
 ---
 
 ## How it decides the source
