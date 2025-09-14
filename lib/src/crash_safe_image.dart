@@ -73,6 +73,9 @@ final ImageProvider<Object> _kTransparentImageProvider = MemoryImage(
   _kTransparentPngBytes,
 );
 
+/// CrashSafeImage is a safe image widget that auto-detects source
+/// (network, asset, file, memory, svg) with friendly placeholders,
+/// error UI and caching for network images.
 class CrashSafeImage extends StatelessWidget {
   final String? name;
 
@@ -128,7 +131,7 @@ class CrashSafeImage extends StatelessWidget {
   });
 
   // ───────────────────────────────────────────────────────────────────────────
-  // [NEW] Create from raw SVG string
+  /// Create from raw SVG string
   // ───────────────────────────────────────────────────────────────────────────
   factory CrashSafeImage.svgString(
     String rawSvg, {
@@ -179,6 +182,8 @@ class CrashSafeImage extends StatelessWidget {
   /// ImageProvider<Object> (NEVER-NULL):
   /// - Memory SVG / Null / Empty / SVG path/url → returns transparent 1×1 PNG
   /// - Otherwise returns appropriate raster provider
+  // Returns a safe [ImageProvider]. Never null; for null/invalid/SVG inputs
+  /// it falls back to a 1×1 transparent image (assertion-safe).
   ImageProvider<Object> get provider {
     // return type: non-nullable
     // Memory image
