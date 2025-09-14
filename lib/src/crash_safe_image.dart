@@ -14,6 +14,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 //   • [SVG SUPPORT] Auto-detects and renders SVG via flutter_svg for network/asset/file/memory
 //   • [NEW] factory CrashSafeImage.svgString('<svg ...>')
 //   • Shared placeholder + error handling pathways
+//   • Provider is now NEVER-NULL (transparent 1×1 fallback)
 
 /// ======  Example usages of CrashSafeImage =======
 
@@ -63,6 +64,13 @@ CrashSafeImage(
   errorBuilder:     (_) => const Icon(Icons.error, color: Colors.red),
 );
 */
+
+const String _kTransparentPngBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABJwNfWQAAAABJRU5ErkJggg==';
+final Uint8List _kTransparentPngBytes = base64Decode(_kTransparentPngBase64);
+final ImageProvider<Object> _kTransparentImageProvider = MemoryImage(
+  _kTransparentPngBytes,
+);
 
 class CrashSafeImage extends StatelessWidget {
   final String? name;
@@ -167,23 +175,29 @@ class CrashSafeImage extends StatelessWidget {
     );
   }
 
-  /// Safe ImageProvider<Object>? for places like CircleAvatar.backgroundImage.
-  /// Note: SVG has no ImageProvider → returns null for SVG sources.
-  ImageProvider<Object>? get provider {
+  /// ImageProvider<Object> (NEVER-NULL):
+  /// - Memory SVG / Null / Empty / SVG path/url → returns transparent 1×1 PNG
+  /// - Otherwise returns appropriate raster provider
+  ImageProvider<Object> get provider {
+    // return type: non-nullable
     // Memory image
     if (bytes != null && bytes!.isNotEmpty) {
       if (_looksLikeSvgFromBytes(bytes)) {
-        return null; // SVG memory → no provider
+        return _kTransparentImageProvider; //  used to be null
       }
       return MemoryImage(bytes!);
     }
 
-    // Null/empty
-    if (name == null || name!.trim().isEmpty) return null;
+    // Null/empty → transparent
+    if (name == null || name!.trim().isEmpty) {
+      return _kTransparentImageProvider; //  used to be null
+    }
     final src = name!.trim();
 
-    // SVG path/url → no provider
-    if (_looksLikeSvgFromPath(src)) return null;
+    // SVG path/url → transparent
+    if (_looksLikeSvgFromPath(src)) {
+      return _kTransparentImageProvider; // used to be null
+    }
 
     // Network (raster)
     final uri = Uri.tryParse(src);
@@ -203,8 +217,13 @@ class CrashSafeImage extends StatelessWidget {
       return FileImage(File(src));
     }
 
-    // Asset (raster)
+    // Asset (raster) — if not found at runtime, Flutter will surface error via logs
     return AssetImage(src, package: package);
+  }
+
+  // (Optional helpers provider  safe)
+  ImageProvider<Object> providerOr(ImageProvider<Object> fallback) {
+    return provider; // provider already never-null; fallback unused
   }
 
   Widget _sizedBox(BuildContext context, Widget child) {
