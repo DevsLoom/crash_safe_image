@@ -366,6 +366,7 @@ class CrashSafeImage extends StatelessWidget {
           colorBlendMode: colorBlendMode,
           fadeInDuration: fadeInDuration,
           fadeOutDuration: fadeOutDuration,
+          filterQuality: FilterQuality.high,
           httpHeaders: httpHeaders,
           cacheKey: cacheKey,
           placeholder: (ctx, _) =>
@@ -393,6 +394,7 @@ class CrashSafeImage extends StatelessWidget {
           fit: fit ?? BoxFit.contain,
           alignment: alignment,
           colorFilter: _svgColorFilter,
+
           placeholderBuilder: (ctx) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
         );
@@ -411,6 +413,7 @@ class CrashSafeImage extends StatelessWidget {
           color: color,
           opacity: opacity,
           colorBlendMode: colorBlendMode,
+          filterQuality: FilterQuality.high,
           errorBuilder: (ctx, _, __) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
@@ -447,6 +450,7 @@ class CrashSafeImage extends StatelessWidget {
         alignment: alignment,
         color: color,
         opacity: opacity,
+        filterQuality: FilterQuality.high,
         colorBlendMode: colorBlendMode,
         errorBuilder: (ctx, _, __) =>
             errorBuilder?.call(ctx) ?? _defaultError(ctx),
