@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+// ignore: unnecessary_import
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // AssetBundle
