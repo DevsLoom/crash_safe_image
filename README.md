@@ -36,10 +36,12 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 - ✅ **Crash‑safe defaults**: shows placeholder while loading and a clean error UI on failure
 - ✅ **Network caching** via `cached_network_image`
 - ✅ **Works in lists/grids** with optional fade‑in/out
-- ✅ **ImageProvider getter** for `CircleAvatar`, `DecorationImage`, etc.
+- ✅ **ImageProvider getter** for `CircleAvatar`, `DecorationImage (**never-null** with transparent fallback)
 - ✅ **Customizable**: size, fit, alignment, borderRadius, color, opacity, blend mode, HTTP headers & cacheKey
 
----
+
+
+---Performance notes
 
 ## Why Crash Safe Image
 - **Stops avoidable crashes**: invalid asset keys, missing files, empty/null sources → you get a friendly error UI instead of exceptions.
@@ -48,6 +50,7 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 - **Caches network images** out of the box via `cached_network_image`.
 - **Works with existing APIs**: grab `.provider` for `CircleAvatar`/`DecorationImage`.
 - **Easy to style**: `fit`, `alignment`, `borderRadius`, `opacity`, `colorBlendMode`.
+- **Zero null checks for Avatar/Decoration**: `provider` is never null—bad/empty/SVG sources fall back to a transparent pixel.
 - **Lean & tested**: small surface area with widget tests.
 
 **When should I use it?**
@@ -115,7 +118,8 @@ CrashSafeImage(
 ```dart
 CircleAvatar(
   radius: 24,
-  backgroundImage: CrashSafeImage('https://example.com/avatar.png').provider,
+  backgroundImage: CrashSafeImage('https://example.com/avatar.png').provider, // never null
+  //No null checks needed—provider is always safe.
 );
 ```
 
@@ -175,9 +179,10 @@ CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
 ### Using as `ImageProvider`
 Get a provider for places that need it (e.g., `CircleAvatar`, `BoxDecoration`):
 ```dart
-final provider = CrashSafeImage('assets/logo.png').provider; // ImageProvider<Object>?
+final provider = CrashSafeImage('assets/logo.png').provider; // ImageProvider<Object>
 ```
-If the source is invalid, `provider` may be `null`; handle that in your UI.
+The provider is never null. If the source is null/invalid/SVG, a 1×1 transparent
++ MemoryImage is returned to keep Avatar/DecorationImage assertion-safe.
 
 ### Custom placeholders & errors
 ```dart
@@ -211,7 +216,7 @@ Container(
   decoration: BoxDecoration(
     borderRadius: BorderRadius.circular(12),
     image: DecorationImage(
-      image: CrashSafeImage('assets/bg.jpg').provider!,
+      image: CrashSafeImage('assets/bg.jpg').provider,
       fit: BoxFit.cover,
     ),
   ),
@@ -232,6 +237,7 @@ Container(
 - The widget wraps content in a `SizedBox` + `ClipRRect` for reliable sizing and rounded corners.
 - Avoid extremely frequent rebuilds with changing `cacheKey` or headers.
 - For very large images in lists, set an explicit `width/height` and `fit` to reduce layout thrash.
+- Transparent fallback is a 1×1 PNG kept in memory; overhead is negligible.
 
 ---
 
