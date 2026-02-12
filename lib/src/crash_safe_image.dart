@@ -262,21 +262,48 @@ class CrashSafeImage extends StatelessWidget {
   bool _looksLikeSvgFromPath(String? path) {
     if (path == null) return false;
     final p = path.toLowerCase().trim();
-    return p.endsWith('.svg') || p.contains('.svg?') || p.contains('.svg#');
+
+    // Check for .svg extension (but not if it's part of another extension)
+    if (p.endsWith('.svg')) return true;
+
+    // Check for .svg with query parameters or fragments
+    final uri = Uri.tryParse(p);
+    if (uri != null && uri.path.toLowerCase().endsWith('.svg')) {
+      return true;
+    }
+
+    return false;
   }
 
-  // [SVG SUPPORT] — Detect SVG by memory bytes (peek first ~128 bytes)
+  // [SVG SUPPORT] — Detect SVG by memory bytes (peek first ~256 bytes)
   bool _looksLikeSvgFromBytes(Uint8List? data) {
     if (data == null || data.isEmpty) return false;
-    final head = utf8
-        .decode(
-          data.sublist(0, data.length < 128 ? data.length : 128),
-          allowMalformed: true,
-        )
-        .trimLeft();
-    return head.startsWith('<svg') ||
-        head.startsWith('<!doctype svg') ||
-        head.startsWith('<!--');
+
+    try {
+      // Handle BOM and decode more bytes for better detection
+      final peekSize = data.length < 256 ? data.length : 256;
+      var startIndex = 0;
+
+      // Skip BOM if present
+      if (data.length >= 3 &&
+          data[0] == 0xEF &&
+          data[1] == 0xBB &&
+          data[2] == 0xBF) {
+        startIndex = 3;
+      }
+
+      final head = utf8
+          .decode(data.sublist(startIndex, peekSize), allowMalformed: true)
+          .trim();
+
+      // More precise SVG detection
+      final lowerHead = head.toLowerCase();
+      return lowerHead.startsWith('<svg') ||
+          lowerHead.startsWith('<?xml') && lowerHead.contains('<svg') ||
+          lowerHead.startsWith('<!doctype svg');
+    } catch (_) {
+      return false;
+    }
   }
 
   // [SVG SUPPORT] — Wrap with opacity for SVG (flutter_svg lacks opacity param)
