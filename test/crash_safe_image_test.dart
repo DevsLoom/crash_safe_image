@@ -189,9 +189,10 @@ void main() {
   });
 
   group('CrashSafeImage (provider & passthrough)', () {
-    test('provider returns null for SVG paths', () {
+    test('provider returns transparent ImageProvider for SVG paths', () {
       final svgProvider = CrashSafeImage('assets/icons/logo.svg').provider;
-      expect(svgProvider, isNull);
+      expect(svgProvider, isA<MemoryImage>());
+      expect(svgProvider, isNotNull);
     });
 
     testWidgets(
