@@ -5,6 +5,3 @@ include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
-    # We use flutter_cache_manager via cached_network_image's transitive dependency
-    # This is intentional to avoid duplicate dependencies
-    depend_on_referenced_packages: false

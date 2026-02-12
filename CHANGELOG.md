@@ -17,7 +17,6 @@
 - Enhanced network URI validation
 - Improved type casting safety
 - Better error handling in build method
-- Optimized dependencies: use `flutter_cache_manager` as transitive dependency via `cached_network_image`
 
 ### Testing
 - Added 25 new tests (32 total)
