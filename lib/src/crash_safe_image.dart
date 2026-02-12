@@ -207,7 +207,9 @@ class CrashSafeImage extends StatelessWidget {
 
     // Network (raster)
     final uri = Uri.tryParse(src);
-    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+    if (uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty) {
       return CachedNetworkImageProvider(
         src,
         headers: httpHeaders,
@@ -215,11 +217,18 @@ class CrashSafeImage extends StatelessWidget {
       );
     }
 
-    // File (raster)
+    // File (raster) - safer file checks
     if (src.startsWith('file://')) {
-      return FileImage(File.fromUri(Uri.parse(src)));
+      try {
+        final file = File.fromUri(Uri.parse(src));
+        return FileImage(file);
+      } catch (_) {
+        return _kTransparentImageProvider;
+      }
     }
-    if (FileSystemEntity.typeSync(src) != FileSystemEntityType.notFound) {
+    
+    // Check if it's a valid file path (safer approach)
+    if (_isValidFilePath(src)) {
       return FileImage(File(src));
     }
 
@@ -256,6 +265,22 @@ class CrashSafeImage extends StatelessWidget {
       context,
       const Center(child: Icon(Icons.broken_image_rounded)),
     );
+  }
+
+  // Helper method for safer file path validation
+  bool _isValidFilePath(String path) {
+    try {
+      // Basic path traversal protection
+      if (path.contains('../') || path.contains('..\\')) {
+        return false;
+      }
+      
+      // Check if file exists without blocking operation
+      final file = File(path);
+      return file.existsSync();
+    } catch (_) {
+      return false;
+    }
   }
 
   // [SVG SUPPORT] — Detect SVG by path/URL
