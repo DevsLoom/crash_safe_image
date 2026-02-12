@@ -113,6 +113,9 @@ class CrashSafeImage extends StatelessWidget {
   // Cache configuration
   final CrashSafeImageCacheConfig? cacheConfig;
 
+  // Hero animations
+  final Object? heroTag;
+
   // Asset extras
   final AssetBundle? bundle;
   final String? package;
@@ -142,6 +145,7 @@ class CrashSafeImage extends StatelessWidget {
     this.useProgressiveLoading = false,
     this.transformations,
     this.cacheConfig,
+    this.heroTag,
     this.bundle,
     this.package,
     this.bytes,
@@ -172,6 +176,7 @@ class CrashSafeImage extends StatelessWidget {
     bool useProgressiveLoading = false,
     List<ImageTransformation>? transformations,
     CrashSafeImageCacheConfig? cacheConfig,
+    Object? heroTag,
     AssetBundle? bundle,
     String? package,
   }) {
@@ -198,6 +203,7 @@ class CrashSafeImage extends StatelessWidget {
       useProgressiveLoading: useProgressiveLoading,
       transformations: transformations,
       cacheConfig: cacheConfig,
+      heroTag: heroTag,
       bundle: bundle,
       package: package,
       bytes: bytes,
@@ -281,7 +287,10 @@ class CrashSafeImage extends StatelessWidget {
     );
 
     // Apply transformations if any
-    return _applyTransformations(result);
+    result = _applyTransformations(result);
+
+    // Apply Hero wrapper if heroTag is provided
+    return _maybeWrapHero(result);
   }
 
   /// Apply image transformations to the widget
@@ -399,6 +408,12 @@ class CrashSafeImage extends StatelessWidget {
   Widget _maybeWrapOpacity(Widget child) {
     if (opacity == null) return child;
     return Opacity(opacity: opacity!.value, child: child);
+  }
+
+  // [HERO SUPPORT] — Wrap with Hero for page transitions
+  Widget _maybeWrapHero(Widget child) {
+    if (heroTag == null) return child;
+    return Hero(tag: heroTag!, child: child);
   }
 
   // [SVG SUPPORT] — Derive a ColorFilter for SVG tinting from color/colorBlendMode
