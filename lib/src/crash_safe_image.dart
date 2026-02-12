@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'image_transformation.dart';
+import 'cache_config.dart';
 
 // WHAT'S NEW:
 //   • [SVG SUPPORT] Auto-detects and renders SVG via flutter_svg for network/asset/file/memory
@@ -109,6 +110,9 @@ class CrashSafeImage extends StatelessWidget {
   // Transformations
   final List<ImageTransformation>? transformations;
 
+  // Cache configuration
+  final CrashSafeImageCacheConfig? cacheConfig;
+
   // Asset extras
   final AssetBundle? bundle;
   final String? package;
@@ -137,6 +141,7 @@ class CrashSafeImage extends StatelessWidget {
     this.thumbnailUrl,
     this.useProgressiveLoading = false,
     this.transformations,
+    this.cacheConfig,
     this.bundle,
     this.package,
     this.bytes,
@@ -166,6 +171,7 @@ class CrashSafeImage extends StatelessWidget {
     String? thumbnailUrl,
     bool useProgressiveLoading = false,
     List<ImageTransformation>? transformations,
+    CrashSafeImageCacheConfig? cacheConfig,
     AssetBundle? bundle,
     String? package,
   }) {
@@ -191,6 +197,7 @@ class CrashSafeImage extends StatelessWidget {
       thumbnailUrl: thumbnailUrl,
       useProgressiveLoading: useProgressiveLoading,
       transformations: transformations,
+      cacheConfig: cacheConfig,
       bundle: bundle,
       package: package,
       bytes: bytes,
@@ -232,6 +239,9 @@ class CrashSafeImage extends StatelessWidget {
         src,
         headers: httpHeaders,
         cacheKey: cacheKey,
+        cacheManager: cacheConfig != null
+            ? CrashSafeImageCache.getCacheManager()
+            : null,
       );
     }
 
@@ -481,6 +491,9 @@ class CrashSafeImage extends StatelessWidget {
             filterQuality: FilterQuality.high,
             httpHeaders: httpHeaders,
             cacheKey: cacheKey,
+            cacheManager: cacheConfig != null
+                ? CrashSafeImageCache.getCacheManager()
+                : null,
             placeholder: (ctx, _) {
               // Show thumbnail as placeholder
               return CachedNetworkImage(
@@ -493,6 +506,9 @@ class CrashSafeImage extends StatelessWidget {
                     : Alignment.center,
                 fadeInDuration: const Duration(milliseconds: 150),
                 fadeOutDuration: const Duration(milliseconds: 150),
+                cacheManager: cacheConfig != null
+                    ? CrashSafeImageCache.getCacheManager()
+                    : null,
                 placeholder: (c, _) =>
                     placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
                 errorWidget: (c, _, __) =>
@@ -523,6 +539,9 @@ class CrashSafeImage extends StatelessWidget {
           filterQuality: FilterQuality.high,
           httpHeaders: httpHeaders,
           cacheKey: cacheKey,
+          cacheManager: cacheConfig != null
+              ? CrashSafeImageCache.getCacheManager()
+              : null,
           placeholder: (ctx, _) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
           errorWidget: (ctx, _, __) =>
