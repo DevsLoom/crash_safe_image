@@ -388,7 +388,9 @@ class CrashSafeImage extends StatelessWidget {
 
     // Case 3: network
     final uri = Uri.tryParse(src);
-    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+    if (uri != null && 
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty) {
       if (isSvgPath) {
         final widget = SvgPicture.network(
           src,
@@ -430,15 +432,49 @@ class CrashSafeImage extends StatelessWidget {
     }
 
     // Case 4: file
-    final isFilePath =
-        src.startsWith('file://') ||
-        FileSystemEntity.typeSync(src) != FileSystemEntityType.notFound;
+    if (src.startsWith('file://')) {
+      try {
+        final file = File.fromUri(Uri.parse(src));
+        if (isSvgPath) {
+          final widget = SvgPicture.file(
+            file,
+            width: width,
+            height: height,
+            fit: fit ?? BoxFit.contain,
+            alignment: alignment,
+            colorFilter: _svgColorFilter,
+            placeholderBuilder: (ctx) =>
+                placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
+          );
+          return _sizedBox(context, _maybeWrapOpacity(widget));
+        }
 
-    if (isFilePath) {
+        // Raster file
+        return _sizedBox(
+          context,
+          Image.file(
+            file,
+            width: width,
+            height: height,
+            fit: fit,
+            alignment: alignment,
+            color: color,
+            opacity: opacity,
+            colorBlendMode: colorBlendMode,
+            filterQuality: FilterQuality.high,
+            errorBuilder: (ctx, _, __) =>
+                errorBuilder?.call(ctx) ?? _defaultError(ctx),
+          ),
+        );
+      } catch (_) {
+        return errorBuilder?.call(context) ?? _defaultError(context);
+      }
+    }
+    
+    // Check for regular file path
+    if (_isValidFilePath(src)) {
+      final file = File(src);
       if (isSvgPath) {
-        final file = src.startsWith('file://')
-            ? File.fromUri(Uri.parse(src))
-            : File(src);
         final widget = SvgPicture.file(
           file,
           width: width,
@@ -446,7 +482,6 @@ class CrashSafeImage extends StatelessWidget {
           fit: fit ?? BoxFit.contain,
           alignment: alignment,
           colorFilter: _svgColorFilter,
-
           placeholderBuilder: (ctx) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
         );
@@ -457,7 +492,7 @@ class CrashSafeImage extends StatelessWidget {
       return _sizedBox(
         context,
         Image.file(
-          src.startsWith('file://') ? File.fromUri(Uri.parse(src)) : File(src),
+          file,
           width: width,
           height: height,
           fit: fit,
