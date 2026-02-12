@@ -100,6 +100,10 @@ class CrashSafeImage extends StatelessWidget {
   final Duration fadeInDuration;
   final Duration fadeOutDuration;
 
+  // Progressive loading
+  final String? thumbnailUrl;
+  final bool useProgressiveLoading;
+
   // Asset extras
   final AssetBundle? bundle;
   final String? package;
@@ -125,6 +129,8 @@ class CrashSafeImage extends StatelessWidget {
     this.cacheKey,
     this.fadeInDuration = const Duration(milliseconds: 250),
     this.fadeOutDuration = const Duration(milliseconds: 250),
+    this.thumbnailUrl,
+    this.useProgressiveLoading = false,
     this.bundle,
     this.package,
     this.bytes,
@@ -151,6 +157,8 @@ class CrashSafeImage extends StatelessWidget {
     String? cacheKey,
     Duration fadeInDuration = const Duration(milliseconds: 250),
     Duration fadeOutDuration = const Duration(milliseconds: 250),
+    String? thumbnailUrl,
+    bool useProgressiveLoading = false,
     AssetBundle? bundle,
     String? package,
   }) {
@@ -173,6 +181,8 @@ class CrashSafeImage extends StatelessWidget {
       cacheKey: cacheKey,
       fadeInDuration: fadeInDuration,
       fadeOutDuration: fadeOutDuration,
+      thumbnailUrl: thumbnailUrl,
+      useProgressiveLoading: useProgressiveLoading,
       bundle: bundle,
       package: package,
       bytes: bytes,
@@ -226,7 +236,7 @@ class CrashSafeImage extends StatelessWidget {
         return _kTransparentImageProvider;
       }
     }
-    
+
     // Check if it's a valid file path (safer approach)
     if (_isValidFilePath(src)) {
       return FileImage(File(src));
@@ -274,7 +284,7 @@ class CrashSafeImage extends StatelessWidget {
       if (path.contains('../') || path.contains('..\\')) {
         return false;
       }
-      
+
       // Check if file exists without blocking operation
       final file = File(path);
       return file.existsSync();
@@ -388,7 +398,7 @@ class CrashSafeImage extends StatelessWidget {
 
     // Case 3: network
     final uri = Uri.tryParse(src);
-    if (uri != null && 
+    if (uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty) {
       if (isSvgPath) {
@@ -406,6 +416,52 @@ class CrashSafeImage extends StatelessWidget {
       }
 
       // Raster network
+      // Progressive loading: show thumbnail first if available
+      if (useProgressiveLoading &&
+          thumbnailUrl != null &&
+          thumbnailUrl!.isNotEmpty) {
+        return _sizedBox(
+          context,
+          CachedNetworkImage(
+            imageUrl: src,
+            width: width,
+            height: height,
+            fit: fit,
+            alignment: alignment is Alignment
+                ? alignment as Alignment
+                : Alignment.center,
+            color: color,
+            colorBlendMode: colorBlendMode,
+            fadeInDuration: fadeInDuration,
+            fadeOutDuration: fadeOutDuration,
+            filterQuality: FilterQuality.high,
+            httpHeaders: httpHeaders,
+            cacheKey: cacheKey,
+            placeholder: (ctx, _) {
+              // Show thumbnail as placeholder
+              return CachedNetworkImage(
+                imageUrl: thumbnailUrl!,
+                width: width,
+                height: height,
+                fit: fit,
+                alignment: alignment is Alignment
+                    ? alignment as Alignment
+                    : Alignment.center,
+                fadeInDuration: const Duration(milliseconds: 150),
+                fadeOutDuration: const Duration(milliseconds: 150),
+                placeholder: (c, _) =>
+                    placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
+                errorWidget: (c, _, __) =>
+                    placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
+              );
+            },
+            errorWidget: (ctx, _, __) =>
+                errorBuilder?.call(ctx) ?? _defaultError(ctx),
+          ),
+        );
+      }
+
+      // Standard network loading
       return _sizedBox(
         context,
         CachedNetworkImage(
@@ -470,7 +526,7 @@ class CrashSafeImage extends StatelessWidget {
         return errorBuilder?.call(context) ?? _defaultError(context);
       }
     }
-    
+
     // Check for regular file path
     if (_isValidFilePath(src)) {
       final file = File(src);
