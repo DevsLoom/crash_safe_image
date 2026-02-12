@@ -507,7 +507,7 @@ class CrashSafeImage extends StatelessWidget {
       );
     }
 
-    // Case 5: asset
+    // Case 5: asset (final fallback)
     if (isSvgPath) {
       final widget = SvgPicture.asset(
         src,
@@ -524,7 +524,7 @@ class CrashSafeImage extends StatelessWidget {
       return _sizedBox(context, _maybeWrapOpacity(widget));
     }
 
-    // Raster asset
+    // Raster asset (final fallback)
     return _sizedBox(
       context,
       Image.asset(
