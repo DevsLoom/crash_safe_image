@@ -6,8 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Progressive Loading', () {
-    testWidgets('accepts thumbnailUrl and useProgressiveLoading parameters',
-        (tester) async {
+    testWidgets('accepts thumbnailUrl and useProgressiveLoading parameters', (
+      tester,
+    ) async {
       const mainUrl = 'https://example.com/image.jpg';
       const thumbUrl = 'https://example.com/thumb.jpg';
 
@@ -28,18 +29,15 @@ void main() {
       expect(find.byType(CrashSafeImage), findsOneWidget);
     });
 
-    testWidgets('works without progressive loading when not enabled',
-        (tester) async {
+    testWidgets('works without progressive loading when not enabled', (
+      tester,
+    ) async {
       const mainUrl = 'https://example.com/image.jpg';
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: CrashSafeImage(
-              mainUrl,
-              width: 200,
-              height: 200,
-            ),
+            body: CrashSafeImage(mainUrl, width: 200, height: 200),
           ),
         ),
       );
@@ -48,8 +46,9 @@ void main() {
       expect(find.byType(CachedNetworkImage), findsWidgets);
     });
 
-    testWidgets('svgString factory includes progressive loading parameters',
-        (tester) async {
+    testWidgets('svgString factory includes progressive loading parameters', (
+      tester,
+    ) async {
       const svgContent = '<svg></svg>';
 
       await tester.pumpWidget(

@@ -11,6 +11,8 @@ import 'package:flutter/services.dart'; // AssetBundle
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'image_transformation.dart';
+
 // WHAT'S NEW:
 //   • [SVG SUPPORT] Auto-detects and renders SVG via flutter_svg for network/asset/file/memory
 //   • [NEW] factory CrashSafeImage.svgString('<svg ...>')
@@ -104,6 +106,9 @@ class CrashSafeImage extends StatelessWidget {
   final String? thumbnailUrl;
   final bool useProgressiveLoading;
 
+  // Transformations
+  final List<ImageTransformation>? transformations;
+
   // Asset extras
   final AssetBundle? bundle;
   final String? package;
@@ -131,6 +136,7 @@ class CrashSafeImage extends StatelessWidget {
     this.fadeOutDuration = const Duration(milliseconds: 250),
     this.thumbnailUrl,
     this.useProgressiveLoading = false,
+    this.transformations,
     this.bundle,
     this.package,
     this.bytes,
@@ -159,6 +165,7 @@ class CrashSafeImage extends StatelessWidget {
     Duration fadeOutDuration = const Duration(milliseconds: 250),
     String? thumbnailUrl,
     bool useProgressiveLoading = false,
+    List<ImageTransformation>? transformations,
     AssetBundle? bundle,
     String? package,
   }) {
@@ -183,6 +190,7 @@ class CrashSafeImage extends StatelessWidget {
       fadeOutDuration: fadeOutDuration,
       thumbnailUrl: thumbnailUrl,
       useProgressiveLoading: useProgressiveLoading,
+      transformations: transformations,
       bundle: bundle,
       package: package,
       bytes: bytes,
@@ -252,7 +260,7 @@ class CrashSafeImage extends StatelessWidget {
   }
 
   Widget _sizedBox(BuildContext context, Widget child) {
-    return SizedBox(
+    Widget result = SizedBox(
       width: width,
       height: height,
       child: ClipRRect(
@@ -261,6 +269,42 @@ class CrashSafeImage extends StatelessWidget {
         child: child,
       ),
     );
+
+    // Apply transformations if any
+    return _applyTransformations(result);
+  }
+
+  /// Apply image transformations to the widget
+  Widget _applyTransformations(Widget child) {
+    if (transformations == null || transformations!.isEmpty) {
+      return child;
+    }
+
+    Widget result = child;
+
+    for (final transform in transformations!) {
+      if (transform is ResizeTransformation) {
+        // Resize already handled by width/height, but we can override
+        if (transform.width != null || transform.height != null) {
+          result = SizedBox(
+            width: transform.width ?? width,
+            height: transform.height ?? height,
+            child: FittedBox(
+              fit: transform.fit ?? fit ?? BoxFit.contain,
+              child: result,
+            ),
+          );
+        }
+      } else if (transform is CropTransformation) {
+        // Apply crop using ClipRect
+        result = ClipRect(
+          clipper: _CropClipper(transform.cropRect),
+          child: result,
+        );
+      }
+    }
+
+    return result;
   }
 
   Widget _defaultPlaceholder(BuildContext context) {
@@ -599,5 +643,22 @@ class CrashSafeImage extends StatelessWidget {
             errorBuilder?.call(ctx) ?? _defaultError(ctx),
       ),
     );
+  }
+}
+
+/// Custom clipper for crop transformation
+class _CropClipper extends CustomClipper<Rect> {
+  final Rect cropRect;
+
+  _CropClipper(this.cropRect);
+
+  @override
+  Rect getClip(Size size) {
+    return cropRect;
+  }
+
+  @override
+  bool shouldReclip(covariant _CropClipper oldClipper) {
+    return oldClipper.cropRect != cropRect;
   }
 }

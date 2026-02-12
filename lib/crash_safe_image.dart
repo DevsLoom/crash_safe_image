@@ -5,3 +5,4 @@
 library crash_safe_image;
 
 export 'src/crash_safe_image.dart';
+export 'src/image_transformation.dart';
