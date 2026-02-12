@@ -2,3 +2,9 @@ include: package:flutter_lints/flutter.yaml
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+linter:
+  rules:
+    # We use flutter_cache_manager via cached_network_image's transitive dependency
+    # This is intentional to avoid duplicate dependencies
+    depend_on_referenced_packages: false

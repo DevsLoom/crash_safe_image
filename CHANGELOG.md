@@ -17,6 +17,7 @@
 - Enhanced network URI validation
 - Improved type casting safety
 - Better error handling in build method
+- Optimized dependencies: use `flutter_cache_manager` as transitive dependency via `cached_network_image`
 
 ### Testing
 - Added 25 new tests (32 total)
@@ -24,7 +25,7 @@
 - Improved test coverage for edge cases
 
 ### Dependencies
-- Added `flutter_cache_manager: ^3.4.1` for advanced caching
+- Uses `flutter_cache_manager` via `cached_network_image` transitive dependency (no explicit declaration needed)
 
 ## 0.2.1 - 2025-09-14
 - Fixed: `provider` could return `null` in some cases.  
