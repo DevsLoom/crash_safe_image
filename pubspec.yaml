@@ -1,6 +1,6 @@
 name: crash_safe_image
 description: "Crash-safe Flutter image widget with network, asset, file, memory & SVG support. Smart caching, placeholders, error UI, and safe ImageProvider."
-version: 0.2.1
+version: 0.3.0
 homepage: https://github.com/DevsLoom/crash_safe_image
 repository: https://github.com/DevsLoom/crash_safe_image
 issue_tracker: https://github.com/DevsLoom/crash_safe_image/issues

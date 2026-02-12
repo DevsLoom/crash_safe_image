@@ -21,6 +21,11 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
   - [Using as `ImageProvider`](#using-as-imageprovider)
   - [Custom placeholders & errors](#custom-placeholders--errors)
 - [Examples](#examples)
+- [Advanced Features (Phase 1)](#advanced-features-phase-1)
+  - [Progressive Loading](#progressive-loading)
+  - [Image Transformations](#image-transformations)
+  - [Enhanced Caching](#enhanced-caching)
+  - [Hero Animations](#hero-animations)
 - [Platform support](#platform-support)
 - [Performance notes](#performance-notes)
 - [Version compatibility](#version-compatibility)
@@ -34,9 +39,12 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 - ✅ **Auto‑detects**: `http/https` → network · `file://`/absolute path → file · no scheme → asset · `bytes` → memory
 - ✅ **SVG support**: auto-detects `.svg` for network/asset/file/memory, powered by `flutter_svg`
 - ✅ **Crash‑safe defaults**: shows placeholder while loading and a clean error UI on failure
-- ✅ **Network caching** via `cached_network_image`
+- ✅ **Network caching** via `cached_network_image` with configurable size limits & retention periods
+- ✅ **Progressive loading**: show thumbnail first, then load full image for better perceived performance
+- ✅ **Image transformations**: resize and crop operations without external tools
+- ✅ **Hero animations**: smooth page-to-page transitions with single `heroTag` parameter
 - ✅ **Works in lists/grids** with optional fade‑in/out
-- ✅ **ImageProvider getter** for `CircleAvatar`, `DecorationImage (**never-null** with transparent fallback)
+- ✅ **ImageProvider getter** for `CircleAvatar`, `DecorationImage` (**never-null** with transparent fallback)
 - ✅ **Customizable**: size, fit, alignment, borderRadius, color, opacity, blend mode, HTTP headers & cacheKey
 
 
@@ -81,7 +89,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  crash_safe_image: ^0.1.0
+  crash_safe_image: ^0.3.0
 ```
 
 Import:
@@ -225,6 +233,130 @@ Container(
 
 ---
 
+## Advanced Features (Phase 1)
+
+### Progressive Loading
+Show a low-resolution thumbnail first, then seamlessly transition to the full image:
+
+```dart
+CrashSafeImage(
+  'https://example.com/full-res.jpg',
+  thumbnailUrl: 'https://example.com/thumbnail.jpg',
+  useProgressiveLoading: true,
+  width: 300,
+  height: 200,
+);
+```
+
+**Benefits**:
+- Better perceived performance
+- Reduced data usage for slow connections
+- Smooth visual experience
+
+### Image Transformations
+Apply resize and crop transformations without external tools:
+
+```dart
+// Resize transformation
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  transformations: [
+    ImageTransformation.resize(400, 300, fit: BoxFit.cover),
+  ],
+);
+
+// Crop transformation
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  transformations: [
+    ImageTransformation.crop(Rect.fromLTWH(50, 50, 200, 200)),
+  ],
+);
+
+// Multiple transformations
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  transformations: [
+    ImageTransformation.resize(600, 400),
+    ImageTransformation.crop(Rect.fromLTWH(100, 50, 400, 300)),
+  ],
+);
+```
+
+### Enhanced Caching
+Control cache behavior globally or per-widget:
+
+```dart
+// Configure global cache settings (call once at app startup)
+void main() {
+  // Use a preset configuration
+  CrashSafeImageCache.configure(CrashSafeImageCacheConfig.aggressive);
+  
+  // Or create custom configuration
+  CrashSafeImageCache.configure(
+    CrashSafeImageCacheConfig(
+      maxNrOfCacheObjects: 300,
+      stalePeriod: Duration(days: 45),
+    ),
+  );
+  
+  runApp(MyApp());
+}
+
+// Use cache configuration in widget
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  cacheConfig: CrashSafeImageCacheConfig.conservative,
+  width: 200,
+  height: 200,
+);
+
+// Clear cache programmatically
+await CrashSafeImageCache.clear();
+
+// Remove specific image from cache
+await CrashSafeImageCache.remove('https://example.com/image.jpg');
+
+// Get cache statistics
+final stats = await CrashSafeImageCache.getStats();
+print('Max objects: ${stats['maxObjects']}');
+print('Stale period: ${stats['stalePeriod']} days');
+```
+
+**Cache presets**:
+- `default`: 200 objects, 30 days retention
+- `aggressive`: 500 objects, 90 days retention
+- `conservative`: 50 objects, 7 days retention
+- `minimal`: 20 objects, 1 day retention
+
+### Hero Animations
+Enable smooth page-to-page transitions with a single parameter:
+
+```dart
+// Source page
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  width: 100,
+  height: 100,
+  heroTag: 'image_1',
+);
+
+// Destination page
+CrashSafeImage(
+  'https://example.com/image.jpg',
+  width: 300,
+  height: 300,
+  heroTag: 'image_1', // Same tag creates the Hero animation
+);
+```
+
+**Benefits**:
+- Fluid user experience
+- Professional transitions
+- Works with all image types (network, asset, file, memory, SVG)
+
+---
+
 ## Platform support
 - **Android/iOS**, **macOS**, **Windows** ✅
 - **Web**: not officially supported yet if your app path relies on `dart:io` file checks. A web‑safe mode is on the roadmap (conditional imports).
@@ -245,12 +377,32 @@ Container(
 - Dart SDK: `>=3.9.0 <4.0.0`
 - Flutter: `>=3.22.0`
 - `cached_network_image: ^3.4.1`
+- `flutter_cache_manager: ^3.4.1`
+- `flutter_svg: ^2.0.0`
 
 See [`pubspec.yaml`](pubspec.yaml) for full constraints.
 
 ---
 
 ## Roadmap
+
+### Phase 2 - Advanced Features (Planned)
+- **Blur effects**: Apply blur transformations (Gaussian, motion blur)
+- **Image filters**: Brightness, contrast, saturation, grayscale
+- **Shimmer loading**: Beautiful skeleton loading effect
+- **Retry mechanism**: Auto-retry failed network loads with exponential backoff
+- **Bandwidth detection**: Auto-adjust image quality based on connection speed
+- **Offline mode**: Queue images for download when online
+
+### Phase 3 - Enterprise Features (Planned)
+- **Memory pressure handling**: Auto-clear cache on low memory
+- **Prefetching API**: Preload images before they're needed
+- **Custom cache backends**: S3, Firebase Storage integration
+- **Analytics hooks**: Track load times, cache hits, failures
+- **Image optimization**: Auto-convert to WebP on supported platforms
+- **CDN integration**: Smart URL generation for image CDNs
+
+### Infrastructure
 - Web‑safe file detection (conditional `dart:io` imports)
 - More knobs for placeholders (colors, shapes)
 - Additional tests for builders and error propagation
