@@ -209,5 +209,62 @@ void main() {
       final Hero hero = tester.widget(find.byType(Hero));
       expect(hero.tag, equals('svg_hero'));
     });
+
+    testWidgets('Default error UI does not nest a second Hero', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CrashSafeImage(
+              'assets/does_not_exist.png',
+              width: 100,
+              height: 100,
+              heroTag: 'error_hero',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.broken_image_rounded), findsOneWidget);
+      expect(find.byType(Hero), findsOneWidget);
+    });
+
+    testWidgets('Navigating with a Hero in error state does not throw', (
+      WidgetTester tester,
+    ) async {
+      final navKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navKey,
+          home: const Scaffold(
+            body: CrashSafeImage(
+              'assets/does_not_exist.png',
+              width: 100,
+              height: 100,
+              heroTag: 'nav_hero',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      navKey.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(
+            body: CrashSafeImage(
+              'assets/does_not_exist.png',
+              width: 200,
+              height: 200,
+              heroTag: 'nav_hero',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }

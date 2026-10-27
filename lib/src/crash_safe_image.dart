@@ -326,18 +326,15 @@ class CrashSafeImage extends StatelessWidget {
     return result;
   }
 
+  // Default placeholder/error are bare content: they render inside an image
+  // widget that is already framed by [_sizedBox], so wrapping them again would
+  // nest a second Hero with the same tag and re-apply transformations.
   Widget _defaultPlaceholder(BuildContext context) {
-    return _sizedBox(
-      context,
-      const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-    );
+    return const Center(child: CircularProgressIndicator(strokeWidth: 2));
   }
 
   Widget _defaultError(BuildContext context) {
-    return _sizedBox(
-      context,
-      const Center(child: Icon(Icons.broken_image_rounded)),
-    );
+    return const Center(child: Icon(Icons.broken_image_rounded));
   }
 
   // Helper method for safer file path validation
@@ -459,7 +456,8 @@ class CrashSafeImage extends StatelessWidget {
 
     // Case 2: empty/null
     if (src == null || src.isEmpty) {
-      return errorBuilder?.call(context) ?? _defaultError(context);
+      return errorBuilder?.call(context) ??
+          _sizedBox(context, _defaultError(context));
     }
 
     // Decide SVG by path once
@@ -601,7 +599,8 @@ class CrashSafeImage extends StatelessWidget {
           ),
         );
       } catch (_) {
-        return errorBuilder?.call(context) ?? _defaultError(context);
+        return errorBuilder?.call(context) ??
+            _sizedBox(context, _defaultError(context));
       }
     }
 
