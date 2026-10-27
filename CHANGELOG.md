@@ -1,4 +1,19 @@
-## 0.3.0 - 2025-01-XX
+## 0.3.1 - 2026-10-26
+### Fixes
+- **Hero**: default placeholder/error UI no longer nests a second `Hero` with the same tag (caused Hero assertions during navigation)
+- **Caching**: per-widget `cacheConfig` is now honored; `CrashSafeImageCache.configure()` applies to every widget without its own config; `clear()`/`remove()` cover all caches in use
+- **SVG**: `CrashSafeImage.svgString()` now UTF-8 encodes input (non-ASCII text was corrupted)
+- **SVG**: animated `opacity` now updates (uses `FadeTransition`)
+- **File**: file paths are detected without blocking I/O in `build()`; absolute paths (`/…`, `C:\…`, `\\…`) are files, other scheme-less paths are assets
+- **Memory**: undecodable raster bytes show the error UI instead of throwing
+- **Network**: progressive thumbnails send `httpHeaders`; `AlignmentDirectional` is resolved for RTL
+- `providerOr(fallback)` now returns `fallback` for null/empty/SVG sources
+
+### Behavior changes
+- Relative paths that exist on disk are no longer treated as files; use an absolute path or `file://`
+- Network images without `cacheConfig` now use the CrashSafeImage cache (global config) instead of `DefaultCacheManager`
+
+## 0.3.0 - 2026-02-12
 **Phase 1 Release - Advanced Features**
 
 ### New Features
@@ -12,8 +27,6 @@
 
 ### Improvements
 - Fixed SVG detection false positives (e.g., image.svg.png)
-- Replaced synchronous file operations with async-safe alternatives
-- Added path traversal protection for file paths
 - Enhanced network URI validation
 - Improved type casting safety
 - Better error handling in build method
@@ -24,7 +37,7 @@
 - Improved test coverage for edge cases
 
 ### Dependencies
-- Uses `flutter_cache_manager` via `cached_network_image` transitive dependency (no explicit declaration needed)
+- Added `flutter_cache_manager` as a direct dependency (used by the cache presets)
 
 ## 0.2.1 - 2025-09-14
 - Fixed: `provider` could return `null` in some cases.  

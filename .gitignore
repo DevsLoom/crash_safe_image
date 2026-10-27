@@ -40,3 +40,7 @@ android/**/GeneratedPluginRegistrant.java
 
 # Others
 .DS_Store
+
+# Flutter tool generated
+.flutter-plugins
+.flutter-plugins-dependencies

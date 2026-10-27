@@ -89,7 +89,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  crash_safe_image: ^0.3.0
+  crash_safe_image: ^0.3.1
 ```
 
 Import:
@@ -151,7 +151,7 @@ CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
 ## How it decides the source
 1. If `bytes != null && bytes.isNotEmpty` → **MemoryImage**
 2. Else if `name == null || name.trim().isEmpty` → **error UI**
-3. Else if `name` is `http`/`https` → **CachedNetworkImage** / `CachedNetworkImageProvider`
+4. Else if `name` is a `file://` URI or an absolute path (`/…`, `C:\…`) → **FileImage**
 4. Else if `name` looks like a file path (e.g., `file://`, absolute) → **FileImage**
 5. Else → **AssetImage**
 
