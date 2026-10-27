@@ -1,10 +1,15 @@
 // test/cache_config_test.dart
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:crash_safe_image/crash_safe_image.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // CacheManager opens its database eagerly; give sqflite a desktop backend.
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
 
   // Mock platform channel for path_provider
   const MethodChannel channel = MethodChannel(
