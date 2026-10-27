@@ -174,6 +174,14 @@ void main() {
       expect(find.byType(SvgPicture), findsOneWidget);
     });
 
+    test('SVG raw string with non-ASCII text is UTF-8 encoded', () {
+      const raw =
+          '<svg xmlns="http://www.w3.org/2000/svg"><text>বাংলা © ✓</text></svg>';
+      final image = CrashSafeImage.svgString(raw);
+      expect(image.bytes, equals(utf8.encode(raw)));
+      expect(utf8.decode(image.bytes!), equals(raw));
+    });
+
     testWidgets('SVG bytes -> renders SvgPicture', (tester) async {
       final svgBytes = Uint8List.fromList(
         ('<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">'

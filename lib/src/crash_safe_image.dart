@@ -180,7 +180,7 @@ class CrashSafeImage extends StatelessWidget {
     AssetBundle? bundle,
     String? package,
   }) {
-    final bytes = Uint8List.fromList(rawSvg.codeUnits);
+    final bytes = utf8.encode(rawSvg);
     return CrashSafeImage(
       null,
       key: key,
