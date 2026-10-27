@@ -268,9 +268,11 @@ class CrashSafeImage extends StatelessWidget {
     return AssetImage(src, package: package);
   }
 
-  // (Optional helpers provider  safe)
+  /// Like [provider], but returns [fallback] instead of the transparent 1×1
+  /// image for null/empty sources and SVG inputs.
   ImageProvider<Object> providerOr(ImageProvider<Object> fallback) {
-    return provider; // provider already never-null; fallback unused
+    final p = provider;
+    return identical(p, _kTransparentImageProvider) ? fallback : p;
   }
 
   Widget _sizedBox(BuildContext context, Widget child) {
@@ -444,6 +446,8 @@ class CrashSafeImage extends StatelessWidget {
           color: color,
           opacity: opacity,
           colorBlendMode: colorBlendMode,
+          errorBuilder: (ctx, _, __) =>
+              errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
     }
@@ -462,6 +466,12 @@ class CrashSafeImage extends StatelessWidget {
     if (uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty) {
+      // CachedNetworkImage only takes Alignment; resolve directional values
+      // (e.g. AlignmentDirectional.centerStart) against the ambient direction.
+      final networkAlignment = alignment.resolve(
+        Directionality.maybeOf(context) ?? TextDirection.ltr,
+      );
+
       if (isSvgPath) {
         final widget = SvgPicture.network(
           src,
@@ -488,9 +498,7 @@ class CrashSafeImage extends StatelessWidget {
             width: width,
             height: height,
             fit: fit,
-            alignment: alignment is Alignment
-                ? alignment as Alignment
-                : Alignment.center,
+            alignment: networkAlignment,
             color: color,
             colorBlendMode: colorBlendMode,
             fadeInDuration: fadeInDuration,
@@ -506,11 +514,10 @@ class CrashSafeImage extends StatelessWidget {
                 width: width,
                 height: height,
                 fit: fit,
-                alignment: alignment is Alignment
-                    ? alignment as Alignment
-                    : Alignment.center,
+                alignment: networkAlignment,
                 fadeInDuration: const Duration(milliseconds: 150),
                 fadeOutDuration: const Duration(milliseconds: 150),
+                httpHeaders: httpHeaders,
                 cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
                 placeholder: (c, _) =>
                     placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
@@ -532,9 +539,7 @@ class CrashSafeImage extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          alignment: alignment is Alignment
-              ? alignment as Alignment
-              : Alignment.center,
+          alignment: networkAlignment,
           color: color,
           colorBlendMode: colorBlendMode,
           fadeInDuration: fadeInDuration,

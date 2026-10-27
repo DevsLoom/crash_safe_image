@@ -136,10 +136,7 @@ void main() {
         CrashSafeImage('/definitely/missing/pic.png').provider,
         isA<FileImage>(),
       );
-      expect(
-        CrashSafeImage(r'C:\images\pic.png').provider,
-        isA<FileImage>(),
-      );
+      expect(CrashSafeImage(r'C:\images\pic.png').provider, isA<FileImage>());
       expect(
         CrashSafeImage('assets/images/pic.png').provider,
         isA<AssetImage>(),
@@ -256,6 +253,85 @@ void main() {
       final svgProvider = CrashSafeImage('assets/icons/logo.svg').provider;
       expect(svgProvider, isA<MemoryImage>());
       expect(svgProvider, isNotNull);
+    });
+
+    test('providerOr returns fallback only when there is no raster source', () {
+      const fallback = AssetImage('assets/fallback.png');
+      expect(CrashSafeImage(null).providerOr(fallback), same(fallback));
+      expect(
+        CrashSafeImage('assets/icon.svg').providerOr(fallback),
+        same(fallback),
+      );
+      expect(
+        CrashSafeImage('assets/pic.png').providerOr(fallback),
+        isA<AssetImage>().having(
+          (p) => p.assetName,
+          'assetName',
+          'assets/pic.png',
+        ),
+      );
+    });
+
+    testWidgets('Undecodable memory bytes -> custom errorBuilder appears', (
+      tester,
+    ) async {
+      final garbage = Uint8List.fromList(List<int>.generate(64, (i) => i));
+      await tester.runAsync(() async {
+        await tester.pumpWidget(
+          _wrap(
+            CrashSafeImage(
+              null,
+              bytes: garbage,
+              errorBuilder: (_) => const Text('ERR_BYTES'),
+            ),
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
+      expect(find.text('ERR_BYTES'), findsOneWidget);
+    });
+
+    testWidgets('Network AlignmentDirectional resolves against RTL', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const Directionality(
+            textDirection: TextDirection.rtl,
+            child: CrashSafeImage(
+              'https://example.com/pic.png',
+              alignment: AlignmentDirectional.centerStart,
+            ),
+          ),
+        ),
+      );
+      final image = tester.widget<CachedNetworkImage>(
+        find.byType(CachedNetworkImage),
+      );
+      expect(image.alignment, Alignment.centerRight);
+    });
+
+    testWidgets('Progressive thumbnail request carries httpHeaders', (
+      tester,
+    ) async {
+      const thumb = 'https://example.com/thumb.png';
+      await tester.pumpWidget(
+        _wrap(
+          const CrashSafeImage(
+            'https://example.com/full.png',
+            thumbnailUrl: thumb,
+            useProgressiveLoading: true,
+            httpHeaders: {'Authorization': 'Bearer TOKEN'},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final thumbImage = tester
+          .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+          .singleWhere((w) => w.imageUrl == thumb);
+      expect(thumbImage.httpHeaders?['Authorization'], 'Bearer TOKEN');
     });
 
     testWidgets(
