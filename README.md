@@ -12,7 +12,7 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 
 ## Table of contents
 - [Features](#features)
-- [Why CrashSafeImage?](#why-crash-safe-image)
+- [Why CrashSafeImage?](#why-crashsafeimage)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [How it decides the source](#how-it-decides-the-source)
@@ -47,13 +47,11 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 - ✅ **ImageProvider getter** for `CircleAvatar`, `DecorationImage` (**never-null** with transparent fallback)
 - ✅ **Customizable**: size, fit, alignment, borderRadius, color, opacity, blend mode, HTTP headers & cacheKey
 
+---
 
-
----Performance notes
-
-## Why Crash Safe Image
+## Why CrashSafeImage?
 - **Stops avoidable crashes**: invalid asset keys, missing files, empty/null sources → you get a friendly error UI instead of exceptions.
-- **One widget, four sources**: network • asset • file • memory — no `if/else` soup.
+- **One widget for every source**: network • asset • file • memory • SVG — no `if/else` soup.
 - **Better UX by default**: placeholders and fade‑in/out already wired.
 - **Caches network images** out of the box via `cached_network_image`.
 - **Works with existing APIs**: grab `.provider` for `CircleAvatar`/`DecorationImage`.
@@ -68,21 +66,51 @@ Crash‑safe image widget for Flutter. It **auto‑detects** image source (netwo
 **When might I not need it?**
 - You need custom decoding/stream control or web‑only file paths (until web‑safe mode ships).
 
-**Before vs After**
-```dart
-// Before: branching + manual fallbacks
-Widget buildAvatar(String? url) {
-  if (url == null || url.isEmpty) return const Icon(Icons.person);
-  return Image.network(url, errorBuilder: (_, __, ___) => const Icon(Icons.person));
-}
+### Before vs After
 
-// After: one line
-CrashSafeImage(url, width: 40, height: 40, errorBuilder: (_) => const Icon(Icons.person));
+**Before**: one branch per source, and every fallback wired by hand:
+
+```dart
+Widget avatar(String? src) {
+  if (src == null || src.isEmpty) return const Icon(Icons.person);
+
+  if (src.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: src,
+      width: 40,
+      height: 40,
+      placeholder: (_, _) => const CircularProgressIndicator(),
+      errorWidget: (_, _, _) => const Icon(Icons.person),
+    );
+  }
+
+  if (src.endsWith('.svg')) {
+    return SvgPicture.asset(src, width: 40, height: 40); // no error fallback 😬
+  }
+
+  return Image.asset(
+    src,
+    width: 40,
+    height: 40,
+    errorBuilder: (_, _, _) => const Icon(Icons.person),
+  );
+}
 ```
 
+**After**: one widget for every source, with the same fallback everywhere:
+
+```dart
+CrashSafeImage(
+  src,
+  width: 40,
+  height: 40,
+  errorBuilder: (_) => const Icon(Icons.person),
+);
+```
+
+What you get without writing it yourself: source detection (network / asset / file / memory / SVG), caching, a loading placeholder, and the same error UI for every failure, including null and empty strings.
+
 ---
-
-
 
 ## Install
 Add to your `pubspec.yaml`:
@@ -126,21 +154,21 @@ CrashSafeImage(
 ```dart
 CircleAvatar(
   radius: 24,
-  backgroundImage: CrashSafeImage('https://example.com/avatar.png').provider, // never null
-  //No null checks needed—provider is always safe.
+  // Never null, so no null checks needed.
+  backgroundImage: CrashSafeImage('https://example.com/avatar.png').provider,
 );
 ```
 
-**SVG examples**
+**SVG**: same constructor; anything ending in `.svg` (or SVG bytes) is rendered with `flutter_svg`:
 ```dart
 // Network SVG
-CrashSafeImage.network('https://example.com/icon.svg', width: 40, height: 40);
+CrashSafeImage('https://example.com/icon.svg', width: 40, height: 40);
 
 // Asset SVG
-CrashSafeImage.asset('assets/icons/logo.svg', width: 80);
+CrashSafeImage('assets/icons/logo.svg', width: 80);
 
 // File SVG
-CrashSafeImage.file(File('/storage/emulated/0/Download/icon.svg'));
+CrashSafeImage('/storage/emulated/0/Download/icon.svg', width: 64);
 
 // Raw SVG string
 CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
@@ -149,11 +177,13 @@ CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
 ---
 
 ## How it decides the source
-1. If `bytes != null && bytes.isNotEmpty` → **MemoryImage**
+1. If `bytes != null && bytes.isNotEmpty` → **memory** (SVG bytes → `SvgPicture.memory`)
 2. Else if `name == null || name.trim().isEmpty` → **error UI**
+3. Else if `name` is an `http`/`https` URL → **CachedNetworkImage** / `CachedNetworkImageProvider`
 4. Else if `name` is a `file://` URI or an absolute path (`/…`, `C:\…`) → **FileImage**
-4. Else if `name` looks like a file path (e.g., `file://`, absolute) → **FileImage**
 5. Else → **AssetImage**
+
+Paths ending in `.svg` are rendered with `flutter_svg` at whichever step they match.
 
 > Note: If the asset path is wrong or the file doesn’t exist, the widget shows the error UI instead of crashing.
 
@@ -172,7 +202,7 @@ CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
 | `borderRadius` | `BorderRadius?` | – | Rounded corners; applied via `ClipRRect`.
 | `clipBehavior` | `Clip` | `Clip.hardEdge` | Clip strategy for rounding.
 | `color` | `Color?` | – | Color filter tint.
-| `opacity` | `Animation<double>?` | – | Animated opacity for `Image.*`.
+| `opacity` | `Animation<double>?` | – | Animated opacity (raster and SVG).
 | `colorBlendMode` | `BlendMode?` | – | Blend mode with `color`.
 | `placeholderBuilder` | `WidgetBuilder?` | built‑in spinner | Builder for loading state.
 | `errorBuilder` | `WidgetBuilder?` | built‑in broken‑image icon | Builder for error state.
@@ -180,6 +210,11 @@ CrashSafeImage.svgString('<svg viewBox="0 0 24 24">...</svg>', width: 48);
 | `cacheKey` | `String?` | – | Custom cache key for network images.
 | `fadeInDuration` | `Duration` | `250ms` | Network fade‑in.
 | `fadeOutDuration` | `Duration` | `250ms` | Network fade‑out.
+| `thumbnailUrl` | `String?` | – | Low‑res image shown first (with `useProgressiveLoading`).
+| `useProgressiveLoading` | `bool` | `false` | Show `thumbnailUrl` while the full image loads.
+| `transformations` | `List<ImageTransformation>?` | – | Resize / crop, applied in order.
+| `cacheConfig` | `CrashSafeImageCacheConfig?` | global config | Cache limits for this widget's network image.
+| `heroTag` | `Object?` | – | Wraps the image in a `Hero` with this tag.
 | `bundle` | `AssetBundle?` | – | Custom bundle for assets.
 | `package` | `String?` | – | Asset package name.
 | `bytes` | `Uint8List?` | – | Raw bytes (memory images).
@@ -189,8 +224,16 @@ Get a provider for places that need it (e.g., `CircleAvatar`, `BoxDecoration`):
 ```dart
 final provider = CrashSafeImage('assets/logo.png').provider; // ImageProvider<Object>
 ```
-The provider is never null. If the source is null/invalid/SVG, a 1×1 transparent
-+ MemoryImage is returned to keep Avatar/DecorationImage assertion-safe.
+The provider is never null. If the source is null/empty/SVG, a 1×1 transparent
+`MemoryImage` is returned to keep Avatar/DecorationImage assertion-safe.
+
+Want your own fallback instead of a transparent pixel? Use `providerOr`:
+```dart
+CircleAvatar(
+  backgroundImage: CrashSafeImage(user.avatarUrl)
+      .providerOr(const AssetImage('assets/default_avatar.png')),
+);
+```
 
 ### Custom placeholders & errors
 ```dart
@@ -317,7 +360,7 @@ await CrashSafeImageCache.clear();
 // Remove specific image from cache
 await CrashSafeImageCache.remove('https://example.com/image.jpg');
 
-// Get cache statistics
+// Read the active global cache limits
 final stats = await CrashSafeImageCache.getStats();
 print('Max objects: ${stats['maxObjects']}');
 print('Stale period: ${stats['stalePeriod']} days');
@@ -358,7 +401,7 @@ CrashSafeImage(
 ---
 
 ## Platform support
-- **Android/iOS**, **macOS**, **Windows** ✅
+- **Android**, **iOS**, **macOS**, **Windows**, **Linux** ✅
 - **Web**: not officially supported yet if your app path relies on `dart:io` file checks. A web‑safe mode is on the roadmap (conditional imports).
 
 > Network and asset images work on the web, but direct local file paths (`FileImage`) do not.
