@@ -131,6 +131,39 @@ void main() {
       expect(find.text('ERR_ASSET'), findsOneWidget);
     });
 
+    test('Absolute paths map to FileImage without touching the disk', () {
+      expect(
+        CrashSafeImage('/definitely/missing/pic.png').provider,
+        isA<FileImage>(),
+      );
+      expect(
+        CrashSafeImage(r'C:\images\pic.png').provider,
+        isA<FileImage>(),
+      );
+      expect(
+        CrashSafeImage('assets/images/pic.png').provider,
+        isA<AssetImage>(),
+      );
+    });
+
+    testWidgets('Missing absolute file -> custom errorBuilder appears', (
+      tester,
+    ) async {
+      await tester.runAsync(() async {
+        await tester.pumpWidget(
+          _wrap(
+            CrashSafeImage(
+              '/definitely/missing/pic.png',
+              errorBuilder: (_) => const Text('ERR_FILE'),
+            ),
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
+      expect(find.text('ERR_FILE'), findsOneWidget);
+    });
+
     testWidgets('Network raster URL -> uses CachedNetworkImage widget', (
       tester,
     ) async {

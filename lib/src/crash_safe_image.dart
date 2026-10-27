@@ -260,7 +260,7 @@ class CrashSafeImage extends StatelessWidget {
     }
 
     // Check if it's a valid file path (safer approach)
-    if (_isValidFilePath(src)) {
+    if (_looksLikeFilePath(src)) {
       return FileImage(File(src));
     }
 
@@ -335,20 +335,15 @@ class CrashSafeImage extends StatelessWidget {
     return const Center(child: Icon(Icons.broken_image_rounded));
   }
 
-  // Helper method for safer file path validation
-  bool _isValidFilePath(String path) {
-    try {
-      // Basic path traversal protection
-      if (path.contains('../') || path.contains('..\\')) {
-        return false;
-      }
+  // Absolute paths are files; everything else without a scheme is an asset.
+  // Decided from the string alone so build() never does blocking file I/O —
+  // a missing file is reported through Image.file's errorBuilder instead.
+  static final RegExp _windowsAbsolutePath = RegExp(r'^[a-zA-Z]:[\\/]');
 
-      // Check if file exists without blocking operation
-      final file = File(path);
-      return file.existsSync();
-    } catch (_) {
-      return false;
-    }
+  bool _looksLikeFilePath(String path) {
+    return path.startsWith('/') ||
+        path.startsWith(r'\\') ||
+        _windowsAbsolutePath.hasMatch(path);
   }
 
   // [SVG SUPPORT] — Detect SVG by path/URL
@@ -598,7 +593,7 @@ class CrashSafeImage extends StatelessWidget {
     }
 
     // Check for regular file path
-    if (_isValidFilePath(src)) {
+    if (_looksLikeFilePath(src)) {
       final file = File(src);
       if (isSvgPath) {
         final widget = SvgPicture.file(
