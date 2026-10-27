@@ -182,6 +182,28 @@ void main() {
       expect(utf8.decode(image.bytes!), equals(raw));
     });
 
+    testWidgets('SVG opacity follows the animation', (tester) async {
+      const raw =
+          '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+          '<rect width="24" height="24"/></svg>';
+      final controller = AnimationController(
+        vsync: const TestVSync(),
+        value: 0.2,
+      );
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        _wrap(CrashSafeImage.svgString(raw, opacity: controller)),
+      );
+
+      final fade = find.descendant(
+        of: find.byType(CrashSafeImage),
+        matching: find.byType(FadeTransition),
+      );
+      expect(fade, findsOneWidget);
+      expect(tester.widget<FadeTransition>(fade).opacity, same(controller));
+    });
+
     testWidgets('SVG bytes -> renders SvgPicture', (tester) async {
       final svgBytes = Uint8List.fromList(
         ('<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">'

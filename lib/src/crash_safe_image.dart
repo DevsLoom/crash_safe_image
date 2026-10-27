@@ -402,7 +402,8 @@ class CrashSafeImage extends StatelessWidget {
   // [SVG SUPPORT] — Wrap with opacity for SVG (flutter_svg lacks opacity param)
   Widget _maybeWrapOpacity(Widget child) {
     if (opacity == null) return child;
-    return Opacity(opacity: opacity!.value, child: child);
+    // FadeTransition listens to the animation; Opacity would freeze its value.
+    return FadeTransition(opacity: opacity!, child: child);
   }
 
   // [HERO SUPPORT] — Wrap with Hero for page transitions
