@@ -374,11 +374,11 @@ CrashSafeImage(
 ---
 
 ## Version compatibility
-- Dart SDK: `>=3.9.0 <4.0.0`
-- Flutter: `>=3.22.0`
-- `cached_network_image: ^3.4.1`
-- `flutter_cache_manager: ^3.4.1` (direct dependency for the cache presets)
-- `flutter_svg: ^2.0.0`
+- Dart SDK: `>=3.12.0 <4.0.0`
+- Flutter: `>=3.44.0` (required by `cached_network_image` 4.x; on older Flutter use `crash_safe_image: ^0.3.0`)
+- `cached_network_image: ^4.0.5`
+- `flutter_cache_manager: ^3.4.5` (direct dependency for the cache presets)
+- `flutter_svg: ^2.3.0`
 
 See [`pubspec.yaml`](pubspec.yaml) for full constraints.
 

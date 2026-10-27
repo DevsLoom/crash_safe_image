@@ -13,6 +13,11 @@
 - Relative paths that exist on disk are no longer treated as files; use an absolute path or `file://`
 - Network images without `cacheConfig` now use the CrashSafeImage cache (global config) instead of `DefaultCacheManager`
 
+### Dependencies
+- Requires Flutter `>=3.44.0` and Dart `>=3.12.0` (needed by `cached_network_image` 4.x)
+- `cached_network_image` `^3.4.1` → `^4.0.5`, `flutter_cache_manager` → `^3.4.5`, `flutter_svg` → `^2.3.0`
+- Dev: `flutter_lints` → `^6.0.0`
+
 ## 0.3.0 - 2026-02-12
 **Phase 1 Release - Advanced Features**
 

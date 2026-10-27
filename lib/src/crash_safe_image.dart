@@ -446,7 +446,7 @@ class CrashSafeImage extends StatelessWidget {
           color: color,
           opacity: opacity,
           colorBlendMode: colorBlendMode,
-          errorBuilder: (ctx, _, __) =>
+          errorBuilder: (ctx, _, _) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -521,11 +521,11 @@ class CrashSafeImage extends StatelessWidget {
                 cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
                 placeholder: (c, _) =>
                     placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
-                errorWidget: (c, _, __) =>
+                errorWidget: (c, _, _) =>
                     placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
               );
             },
-            errorWidget: (ctx, _, __) =>
+            errorWidget: (ctx, _, _) =>
                 errorBuilder?.call(ctx) ?? _defaultError(ctx),
           ),
         );
@@ -550,7 +550,7 @@ class CrashSafeImage extends StatelessWidget {
           cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
           placeholder: (ctx, _) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
-          errorWidget: (ctx, _, __) =>
+          errorWidget: (ctx, _, _) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -587,7 +587,7 @@ class CrashSafeImage extends StatelessWidget {
             opacity: opacity,
             colorBlendMode: colorBlendMode,
             filterQuality: FilterQuality.high,
-            errorBuilder: (ctx, _, __) =>
+            errorBuilder: (ctx, _, _) =>
                 errorBuilder?.call(ctx) ?? _defaultError(ctx),
           ),
         );
@@ -627,7 +627,7 @@ class CrashSafeImage extends StatelessWidget {
           opacity: opacity,
           colorBlendMode: colorBlendMode,
           filterQuality: FilterQuality.high,
-          errorBuilder: (ctx, _, __) =>
+          errorBuilder: (ctx, _, _) =>
               errorBuilder?.call(ctx) ?? _defaultError(ctx),
         ),
       );
@@ -665,7 +665,7 @@ class CrashSafeImage extends StatelessWidget {
         opacity: opacity,
         filterQuality: FilterQuality.high,
         colorBlendMode: colorBlendMode,
-        errorBuilder: (ctx, _, __) =>
+        errorBuilder: (ctx, _, _) =>
             errorBuilder?.call(ctx) ?? _defaultError(ctx),
       ),
     );

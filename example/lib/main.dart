@@ -2,6 +2,7 @@
 import 'dart:convert'; // for base64 -> bytes
 import 'dart:typed_data'; // for Uint8List
 import 'dart:io' show File; // for File (non-web targets only)
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:crash_safe_image/crash_safe_image.dart';
@@ -185,16 +186,14 @@ class HomePage extends StatelessWidget {
             title:
                 '8) DecorationImage (Container bg) — safe fallback via onError',
             child: const SafeDecoratedBox(
-              url:
-                  'https://example.com/broken-bg.jpg', // will fallback to grey color
+              url: 'https://example.com/broken-bg.jpg', // will fallback to grey color
               height: 120,
               child: Center(child: Text('Fallback color if background fails')),
             ),
           ),
 
           _Section(
-            title:
-                '9) Stack background via widget (easiest full-control fallback)',
+            title: '9) Stack background via widget (easiest full-control fallback)',
             child: SizedBox(
               height: 150,
               child: Stack(
@@ -259,9 +258,8 @@ class _Section extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           child,
@@ -374,7 +372,7 @@ class _SafeDecoratedBoxState extends State<SafeDecoratedBox> {
             : DecorationImage(
                 image: provider,
                 fit: BoxFit.cover,
-                onError: (_, __) =>
+                onError: (_, _) =>
                     mounted ? setState(() => _bgBroken = true) : null,
               ),
       ),
