@@ -245,9 +245,7 @@ class CrashSafeImage extends StatelessWidget {
         src,
         headers: httpHeaders,
         cacheKey: cacheKey,
-        cacheManager: cacheConfig != null
-            ? CrashSafeImageCache.getCacheManager()
-            : null,
+        cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
       );
     }
 
@@ -504,9 +502,7 @@ class CrashSafeImage extends StatelessWidget {
             filterQuality: FilterQuality.high,
             httpHeaders: httpHeaders,
             cacheKey: cacheKey,
-            cacheManager: cacheConfig != null
-                ? CrashSafeImageCache.getCacheManager()
-                : null,
+            cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
             placeholder: (ctx, _) {
               // Show thumbnail as placeholder
               return CachedNetworkImage(
@@ -519,9 +515,7 @@ class CrashSafeImage extends StatelessWidget {
                     : Alignment.center,
                 fadeInDuration: const Duration(milliseconds: 150),
                 fadeOutDuration: const Duration(milliseconds: 150),
-                cacheManager: cacheConfig != null
-                    ? CrashSafeImageCache.getCacheManager()
-                    : null,
+                cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
                 placeholder: (c, _) =>
                     placeholderBuilder?.call(c) ?? _defaultPlaceholder(c),
                 errorWidget: (c, _, __) =>
@@ -552,9 +546,7 @@ class CrashSafeImage extends StatelessWidget {
           filterQuality: FilterQuality.high,
           httpHeaders: httpHeaders,
           cacheKey: cacheKey,
-          cacheManager: cacheConfig != null
-              ? CrashSafeImageCache.getCacheManager()
-              : null,
+          cacheManager: CrashSafeImageCache.getCacheManager(cacheConfig),
           placeholder: (ctx, _) =>
               placeholderBuilder?.call(ctx) ?? _defaultPlaceholder(ctx),
           errorWidget: (ctx, _, __) =>

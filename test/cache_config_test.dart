@@ -84,9 +84,50 @@ void main() {
       expect(stats['stalePeriod'], equals(45));
     });
 
-    // Note: Tests that require CacheManager instantiation are skipped
-    // because they require full Flutter runtime environment with
-    // platform channels and database factory initialization.
-    // These are tested through integration tests and widget tests.
+    test('equal configs compare equal and share a storage key', () {
+      const a = CrashSafeImageCacheConfig(maxNrOfCacheObjects: 42);
+      const b = CrashSafeImageCacheConfig(maxNrOfCacheObjects: 42);
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a.effectiveRepoKey, equals(b.effectiveRepoKey));
+    });
+
+    test('different presets get different storage keys', () {
+      expect(
+        CrashSafeImageCacheConfig.defaultConfig.effectiveRepoKey,
+        equals('crashSafeImageCache'),
+      );
+      expect(
+        CrashSafeImageCacheConfig.aggressive.effectiveRepoKey,
+        isNot(CrashSafeImageCacheConfig.conservative.effectiveRepoKey),
+      );
+      expect(
+        const CrashSafeImageCacheConfig(repoKey: 'mine').effectiveRepoKey,
+        equals('mine'),
+      );
+    });
+
+    test('getCacheManager honors per-call config over global config', () {
+      CrashSafeImageCache.configure(CrashSafeImageCacheConfig.minimal);
+
+      final global = CrashSafeImageCache.getCacheManager();
+      final perWidget = CrashSafeImageCache.getCacheManager(
+        CrashSafeImageCacheConfig.aggressive,
+      );
+
+      expect(global.config.maxNrOfCacheObjects, equals(20));
+      expect(perWidget.config.maxNrOfCacheObjects, equals(500));
+      expect(perWidget.config.stalePeriod, equals(const Duration(days: 90)));
+    });
+
+    test('getCacheManager reuses one instance per config', () {
+      final first = CrashSafeImageCache.getCacheManager(
+        const CrashSafeImageCacheConfig(maxNrOfCacheObjects: 77),
+      );
+      final second = CrashSafeImageCache.getCacheManager(
+        const CrashSafeImageCacheConfig(maxNrOfCacheObjects: 77),
+      );
+      expect(identical(first, second), isTrue);
+    });
   });
 }

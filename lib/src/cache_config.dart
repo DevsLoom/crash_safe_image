@@ -40,49 +40,80 @@ class CrashSafeImageCacheConfig {
     maxNrOfCacheObjects: 20,
     stalePeriod: Duration(days: 1),
   );
+
+  /// Storage key used by the underlying cache. Configs without an explicit
+  /// [repoKey] get a key derived from their limits, so different presets never
+  /// share (and fight over) the same cache database.
+  String get effectiveRepoKey {
+    if (repoKey != null) return repoKey!;
+    if (this == defaultConfig) return 'crashSafeImageCache';
+    return 'crashSafeImageCache_${maxNrOfCacheObjects}_${stalePeriod.inSeconds}';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is CrashSafeImageCacheConfig &&
+      other.maxNrOfCacheObjects == maxNrOfCacheObjects &&
+      other.stalePeriod == stalePeriod &&
+      other.repoKey == repoKey;
+
+  @override
+  int get hashCode => Object.hash(maxNrOfCacheObjects, stalePeriod, repoKey);
 }
 
 /// Global cache manager for CrashSafeImage
 class CrashSafeImageCache {
   static CrashSafeImageCacheConfig _config =
       CrashSafeImageCacheConfig.defaultConfig;
-  static CacheManager? _customCacheManager;
+
+  /// One manager per storage key; reused so the same cache database is never
+  /// opened by two [CacheManager] instances.
+  static final Map<String, CacheManager> _managers = {};
 
   /// Get current cache configuration
   static CrashSafeImageCacheConfig get config => _config;
 
-  /// Configure global cache settings
+  /// Configure global cache settings. Applies to every widget that does not
+  /// pass its own `cacheConfig`.
   static void configure(CrashSafeImageCacheConfig config) {
     _config = config;
-    _customCacheManager = null; // Reset to recreate with new config
   }
 
-  /// Get cache manager instance
-  static CacheManager getCacheManager() {
-    _customCacheManager ??= CacheManager(
-      Config(
-        _config.repoKey ?? 'crashSafeImageCache',
-        stalePeriod: _config.stalePeriod,
-        maxNrOfCacheObjects: _config.maxNrOfCacheObjects,
+  /// Get the cache manager for [config], or for the global config if null.
+  ///
+  /// Configs sharing the same [CrashSafeImageCacheConfig.repoKey] share one
+  /// manager (the first config registered for that key wins).
+  static CacheManager getCacheManager([CrashSafeImageCacheConfig? config]) {
+    final c = config ?? _config;
+    return _managers.putIfAbsent(
+      c.effectiveRepoKey,
+      () => CacheManager(
+        Config(
+          c.effectiveRepoKey,
+          stalePeriod: c.stalePeriod,
+          maxNrOfCacheObjects: c.maxNrOfCacheObjects,
+        ),
       ),
     );
-    return _customCacheManager!;
   }
 
-  /// Clear all cached images
+  /// Clear all cached images (global and per-widget caches)
   static Future<void> clear() async {
-    await getCacheManager().emptyCache();
+    getCacheManager();
+    await Future.wait(_managers.values.map((m) => m.emptyCache()));
   }
 
-  /// Remove a specific cached image by URL
+  /// Remove a specific cached image by URL (or custom cacheKey) from all caches
   static Future<void> remove(String url) async {
-    await getCacheManager().removeFile(url);
+    getCacheManager();
+    await Future.wait(_managers.values.map((m) => m.removeFile(url)));
   }
 
-  /// Get cache statistics (file count and size)
+  /// Returns the active global cache limits.
+  ///
+  /// flutter_cache_manager exposes no file count/size API, so this reports
+  /// the configured limits rather than live usage.
   static Future<Map<String, dynamic>> getStats() async {
-    // Note: flutter_cache_manager doesn't provide direct stats API
-    // This is a placeholder for future enhancement
     return {
       'maxObjects': _config.maxNrOfCacheObjects,
       'stalePeriod': _config.stalePeriod.inDays,
