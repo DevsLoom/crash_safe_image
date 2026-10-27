@@ -1,3 +1,14 @@
+## 0.4.1 - 2026-10-27
+
+Docs-only release. The code didn't change, but the README had a few things that were just wrong.
+
+- **The SVG examples didn't compile.** They used `CrashSafeImage.network()`, `.asset()` and `.file()`, which don't exist. They now use the regular constructor, which is what actually handles SVGs.
+- **"How it decides the source" was missing the network step.** It's back, and the numbering makes sense again.
+- **The parameter table now lists everything**, including `thumbnailUrl`, `useProgressiveLoading`, `transformations`, `cacheConfig` and `heroTag`.
+- **`providerOr()` is documented**, with a small default-avatar example.
+- **A more honest Before vs After.** It now shows the if/else you'd really write for several image sources, not just a single `Image.network`.
+- Small cleanups: a stray `+`, some leftover text, Linux added to the platform list, and `getStats()` described as what it really returns (limits, not usage).
+
 ## 0.4.0 - 2026-10-26
 
 This one is mostly about fixing things that didn't quite work the way 0.3.0 promised, plus catching up on dependencies. If you use `heroTag`, `cacheConfig` or `svgString()`, you'll want this update.

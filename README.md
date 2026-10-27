@@ -117,7 +117,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  crash_safe_image: ^0.4.0
+  crash_safe_image: ^0.4.1
 ```
 
 Import:
